@@ -1,0 +1,7 @@
+{
+  "name": "FallGuard: 跌倒意外分析助手",
+  "description": "智能分析院舍跌倒報告，提供預防建議並自動生成交更簿評估記錄。",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
