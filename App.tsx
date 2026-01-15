@@ -23,7 +23,7 @@ const App: React.FC = () => {
     } catch (error: any) {
       console.error(error);
       setAppState(AppState.ERROR);
-      // Display the actual error message to help debug (e.g., missing API key)
+      // Display the actual error message
       const message = error instanceof Error ? error.message : "未知錯誤";
       setErrorMsg(message || '分析失敗，請檢查網絡或照片清晰度，然後重試。');
     }
@@ -37,6 +37,8 @@ const App: React.FC = () => {
   };
 
   const isRateLimit = errorMsg.includes("用量已達上限") || errorMsg.includes("RESOURCE_EXHAUSTED");
+  // Check specifically for server connection issues
+  const isConnectionError = errorMsg.includes("無法連接") || errorMsg.includes("找不到");
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
@@ -75,7 +77,7 @@ const App: React.FC = () => {
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex-shrink-0 mt-0.5">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
               </svg>
-              <span>請確保照片清晰顯示報告上的手寫或打印文字，以獲得最佳分析結果。</span>
+              <span>為保障私隱，系統不會儲存任何照片，所有分析均即時處理。</span>
             </div>
           </div>
         )}
@@ -87,8 +89,8 @@ const App: React.FC = () => {
               <div className="absolute inset-0 border-4 border-gray-200 rounded-full"></div>
               <div className="absolute inset-0 border-4 border-teal-500 rounded-full border-t-transparent animate-spin"></div>
             </div>
-            <h3 className="text-xl font-bold text-gray-800">正在分析報告...</h3>
-            <p className="text-gray-500 mt-2">正在識別文字及分析跌倒原因</p>
+            <h3 className="text-xl font-bold text-gray-800">正在連接雲端分析...</h3>
+            <p className="text-gray-500 mt-2">請稍候，這可能需要幾秒鐘</p>
           </div>
         )}
 
@@ -109,11 +111,18 @@ const App: React.FC = () => {
               <p className={`${isRateLimit ? 'text-amber-800' : 'text-red-800'} font-medium text-sm break-words whitespace-pre-line`}>{errorMsg}</p>
             </div>
             
-            {!isRateLimit && (
-              <p className="text-gray-500 mt-4 mb-6 text-sm">
-                如果是 "API_KEY" 相關錯誤，請檢查 Vercel 設定。<br/>
-                如果是 "Candidate" 相關錯誤，代表 AI 無法處理此圖片。
-              </p>
+            {isConnectionError && (
+              <div className="mt-4 text-xs text-gray-500 bg-gray-100 p-3 rounded text-left">
+                <strong>本地開發提示 (Localhost):</strong>
+                <ul className="list-disc ml-4 mt-1">
+                  <li>請確保已開啟新的終端機並執行 <code>node server.js</code></li>
+                </ul>
+                <strong className="block mt-2">Vercel 部署提示:</strong>
+                <ul className="list-disc ml-4 mt-1">
+                  <li>請檢查 Vercel 專案設定中是否已加入 <code>API_KEY</code> 環境變數</li>
+                  <li>請確保 <code>api/analyze.js</code> 檔案已正確上傳</li>
+                </ul>
+              </div>
             )}
 
             <button 
