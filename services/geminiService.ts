@@ -84,10 +84,11 @@ export const analyzeFallReport = async (base64Image: string): Promise<FallAnalys
 
     const ai = new GoogleGenAI({ apiKey: apiKey });
     
-    // Switch to gemini-2.0-flash-exp for higher rate limits (15 RPM vs 2 RPM) and speed
-    // This resolves the "Quota exceeded ... limit: 0" error often seen with Pro models on free tier.
+    // Switch to 'gemini-flash-latest' (Standard Flash).
+    // This model has the most stable and generous free tier quota (15 RPM / 1500 RPD).
+    // It is robust enough for handwriting OCR and medical reasoning.
     const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash-exp',
+      model: 'gemini-flash-latest',
       contents: {
         parts: [
           {
