@@ -114,8 +114,19 @@ export const analyzeFallReport = async (base64Image: string): Promise<FallAnalys
     }
 
     return JSON.parse(text) as FallAnalysis;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Gemini Analysis Error:", error);
+    
+    const errorStr = error.toString();
+    
+    // Handle 429 Rate Limit specifically
+    if (errorStr.includes("429") || errorStr.includes("RESOURCE_EXHAUSTED")) {
+        // Try to extract seconds from "Please retry in 57.75s"
+        const match = errorStr.match(/Please retry in ([0-9.]+)s/);
+        const seconds = match ? Math.ceil(parseFloat(match[1])) : 60;
+        throw new Error(`⚠️ 免費版 API 用量已達上限。\n請等待約 ${seconds} 秒後再試，或升級 API Key。`);
+    }
+
     throw error;
   }
 };

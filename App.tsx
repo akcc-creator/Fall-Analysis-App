@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { analyzeFallReport } from './services/geminiService';
 import CameraInput from './components/CameraInput';
@@ -34,6 +35,8 @@ const App: React.FC = () => {
     setCurrentImage(null);
     setErrorMsg('');
   };
+
+  const isRateLimit = errorMsg.includes("用量已達上限") || errorMsg.includes("RESOURCE_EXHAUSTED");
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
@@ -92,22 +95,30 @@ const App: React.FC = () => {
         {/* State: ERROR */}
         {appState === AppState.ERROR && (
           <div className="flex flex-col items-center justify-center py-12 text-center px-4">
-            <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-4">
+            <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${isRateLimit ? 'bg-amber-100 text-amber-500' : 'bg-red-100 text-red-500'}`}>
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-8 h-8">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                {isRateLimit ? (
+                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                ) : (
+                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                )}
               </svg>
             </div>
-            <h3 className="text-lg font-bold text-gray-900">分析失敗</h3>
-            <div className="mt-4 p-4 bg-red-50 border border-red-100 rounded-lg max-w-md">
-              <p className="text-red-800 font-mono text-sm break-words">{errorMsg}</p>
+            <h3 className="text-lg font-bold text-gray-900">{isRateLimit ? '分析請求過於頻繁' : '分析失敗'}</h3>
+            <div className={`mt-4 p-4 rounded-lg max-w-md w-full ${isRateLimit ? 'bg-amber-50 border border-amber-200' : 'bg-red-50 border border-red-100'}`}>
+              <p className={`${isRateLimit ? 'text-amber-800' : 'text-red-800'} font-medium text-sm break-words whitespace-pre-line`}>{errorMsg}</p>
             </div>
-            <p className="text-gray-500 mt-4 mb-6 text-sm">
-              如果是 "API_KEY" 相關錯誤，請檢查 Vercel 設定。<br/>
-              如果是 "Candidate" 相關錯誤，代表 AI 無法處理此圖片。
-            </p>
+            
+            {!isRateLimit && (
+              <p className="text-gray-500 mt-4 mb-6 text-sm">
+                如果是 "API_KEY" 相關錯誤，請檢查 Vercel 設定。<br/>
+                如果是 "Candidate" 相關錯誤，代表 AI 無法處理此圖片。
+              </p>
+            )}
+
             <button 
               onClick={handleReset}
-              className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium"
+              className={`mt-6 px-8 py-2.5 rounded-lg text-white font-medium transition-colors ${isRateLimit ? 'bg-amber-500 hover:bg-amber-600' : 'bg-teal-600 hover:bg-teal-700'}`}
             >
               重試
             </button>
