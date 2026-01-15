@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type, Schema } from "@google/genai";
 import { FallAnalysis } from "../types";
 
@@ -54,18 +55,31 @@ const RESPONSE_SCHEMA: Schema = {
   required: ["detectedTextSummary", "possibleCauses", "preventionStrategies", "handoverNote"],
 };
 
+// Helper function to safely retrieve API Key from various environment configurations
+const getApiKey = (): string => {
+  // 1. Try Vite environment (Vercel Frontend Default for Vite apps)
+  // @ts-ignore
+  if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_KEY) {
+    // @ts-ignore
+    return import.meta.env.VITE_API_KEY;
+  }
+
+  // 2. Try Standard process.env (Node.js / Webpack / System)
+  if (typeof process !== 'undefined' && process.env) {
+    if (process.env.API_KEY) return process.env.API_KEY;
+    if (process.env.REACT_APP_API_KEY) return process.env.REACT_APP_API_KEY;
+    if (process.env.NEXT_PUBLIC_API_KEY) return process.env.NEXT_PUBLIC_API_KEY;
+  }
+  
+  return '';
+};
+
 export const analyzeFallReport = async (base64Image: string): Promise<FallAnalysis> => {
   try {
-    // Safer check for API Key that won't crash if process is undefined
-    let apiKey = '';
-    
-    // Check if process exists (Node/Build env)
-    if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
-      apiKey = process.env.API_KEY;
-    } 
+    const apiKey = getApiKey();
 
     if (!apiKey) {
-      throw new Error("API_KEY is not configured. Please check Vercel Environment Variables.");
+      throw new Error("API_KEY is not configured. 請檢查 Vercel 設定，確保變數名稱為 'VITE_API_KEY'。");
     }
 
     const ai = new GoogleGenAI({ apiKey: apiKey });
