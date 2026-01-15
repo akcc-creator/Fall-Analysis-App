@@ -84,9 +84,10 @@ export const analyzeFallReport = async (base64Image: string): Promise<FallAnalys
 
     const ai = new GoogleGenAI({ apiKey: apiKey });
     
-    // Using gemini-3-pro-preview for better handwriting recognition and clinical reasoning
+    // Switch to gemini-2.0-flash-exp for higher rate limits (15 RPM vs 2 RPM) and speed
+    // This resolves the "Quota exceeded ... limit: 0" error often seen with Pro models on free tier.
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-2.0-flash-exp',
       contents: {
         parts: [
           {
@@ -124,7 +125,7 @@ export const analyzeFallReport = async (base64Image: string): Promise<FallAnalys
         // Try to extract seconds from "Please retry in 57.75s"
         const match = errorStr.match(/Please retry in ([0-9.]+)s/);
         const seconds = match ? Math.ceil(parseFloat(match[1])) : 60;
-        throw new Error(`⚠️ 免費版 API 用量已達上限。\n請等待約 ${seconds} 秒後再試，或升級 API Key。`);
+        throw new Error(`⚠️ 免費版 API 用量已達上限。\n請等待約 ${seconds} 秒後再試，或考慮升級 API Key。`);
     }
 
     throw error;
