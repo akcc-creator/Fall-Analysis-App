@@ -21,9 +21,10 @@ const CameraInput: React.FC<CameraInputProps> = ({ onImageSelected, disabled }) 
           let width = img.width;
           let height = img.height;
           
-          // Max dimensions to ensure fast upload
-          const MAX_WIDTH = 1280;
-          const MAX_HEIGHT = 1280;
+          // BALANCE: 1600px is sufficient for A4 text OCR, but keeps file size < 1MB
+          // Previous 1024px might be too blurry for small handwriting.
+          const MAX_WIDTH = 1600;
+          const MAX_HEIGHT = 1600;
 
           if (width > height) {
             if (width > MAX_WIDTH) {
@@ -47,8 +48,8 @@ const CameraInput: React.FC<CameraInputProps> = ({ onImageSelected, disabled }) 
           
           ctx.drawImage(img, 0, 0, width, height);
           
-          // Compress to JPEG with 0.7 quality
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+          // Quality 0.8 (Good for text)
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
           const base64 = dataUrl.split(',')[1];
           resolve(base64);
         };
@@ -116,7 +117,7 @@ const CameraInput: React.FC<CameraInputProps> = ({ onImageSelected, disabled }) 
           {isCompressing ? '處理圖片中...' : '拍攝 / 上載跌倒報告'}
         </span>
         <span className="text-sm text-teal-600 mt-1">
-          {isCompressing ? '請稍候' : '支援手寫表格識別'}
+          {isCompressing ? '系統會自動優化圖片清晰度' : '支援手寫表格識別'}
         </span>
       </button>
     </div>

@@ -56,13 +56,19 @@ const RESPONSE_SCHEMA: Schema = {
 
 export const analyzeFallReport = async (base64Image: string): Promise<FallAnalysis> => {
   try {
-    // Check for API Key presence to give a helpful error
-    if (!process.env.API_KEY) {
-      console.error("API_KEY is missing. If you are on Vercel, please add it in Project Settings > Environment Variables.");
-      throw new Error("API_KEY is not configured.");
+    // Safer check for API Key that won't crash if process is undefined
+    let apiKey = '';
+    
+    // Check if process exists (Node/Build env)
+    if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
+      apiKey = process.env.API_KEY;
+    } 
+
+    if (!apiKey) {
+      throw new Error("API_KEY is not configured. Please check Vercel Environment Variables.");
     }
 
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: apiKey });
     
     // Using gemini-3-pro-preview for better handwriting recognition and clinical reasoning
     const response = await ai.models.generateContent({

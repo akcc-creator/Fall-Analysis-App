@@ -19,10 +19,12 @@ const App: React.FC = () => {
       const result = await analyzeFallReport(base64);
       setAnalysis(result);
       setAppState(AppState.SUCCESS);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       setAppState(AppState.ERROR);
-      setErrorMsg('分析失敗，請檢查網絡或照片清晰度，然後重試。');
+      // Display the actual error message to help debug (e.g., missing API key)
+      const message = error instanceof Error ? error.message : "未知錯誤";
+      setErrorMsg(message || '分析失敗，請檢查網絡或照片清晰度，然後重試。');
     }
   };
 
@@ -30,6 +32,7 @@ const App: React.FC = () => {
     setAppState(AppState.IDLE);
     setAnalysis(null);
     setCurrentImage(null);
+    setErrorMsg('');
   };
 
   return (
@@ -88,14 +91,20 @@ const App: React.FC = () => {
 
         {/* State: ERROR */}
         {appState === AppState.ERROR && (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
+          <div className="flex flex-col items-center justify-center py-12 text-center px-4">
             <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-4">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-8 h-8">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
               </svg>
             </div>
             <h3 className="text-lg font-bold text-gray-900">分析失敗</h3>
-            <p className="text-gray-600 mt-2 mb-6 max-w-xs mx-auto">{errorMsg}</p>
+            <div className="mt-4 p-4 bg-red-50 border border-red-100 rounded-lg max-w-md">
+              <p className="text-red-800 font-mono text-sm break-words">{errorMsg}</p>
+            </div>
+            <p className="text-gray-500 mt-4 mb-6 text-sm">
+              如果是 "API_KEY" 相關錯誤，請檢查 Vercel 設定。<br/>
+              如果是 "Candidate" 相關錯誤，代表 AI 無法處理此圖片。
+            </p>
             <button 
               onClick={handleReset}
               className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium"
