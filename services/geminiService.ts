@@ -56,6 +56,12 @@ const RESPONSE_SCHEMA: Schema = {
 
 export const analyzeFallReport = async (base64Image: string): Promise<FallAnalysis> => {
   try {
+    // Check for API Key presence to give a helpful error
+    if (!process.env.API_KEY) {
+      console.error("API_KEY is missing. If you are on Vercel, please add it in Project Settings > Environment Variables.");
+      throw new Error("API_KEY is not configured.");
+    }
+
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     
     // Using gemini-3-pro-preview for better handwriting recognition and clinical reasoning
