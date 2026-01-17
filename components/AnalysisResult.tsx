@@ -5,12 +5,12 @@ import { FallAnalysis, PreventionMeasure } from '../types';
 interface AnalysisResultProps {
   analysis: FallAnalysis;
   onReset: () => void;
-  imageUrl: string;
+  imageUrls: string[];
 }
 
-const AnalysisResult: React.FC<AnalysisResultProps> = ({ analysis, onReset, imageUrl }) => {
+const AnalysisResult: React.FC<AnalysisResultProps> = ({ analysis, onReset, imageUrls }) => {
   const [copied, setCopied] = useState(false);
-  const [isZoomed, setIsZoomed] = useState(false);
+  const [zoomedImage, setZoomedImage] = useState<string | null>(null);
 
   const handleCopy = async () => {
     try {
@@ -34,38 +34,46 @@ const AnalysisResult: React.FC<AnalysisResultProps> = ({ analysis, onReset, imag
   return (
     <div className="space-y-6 w-full max-w-2xl mx-auto pb-20">
       
-      {/* Image Preview & Zoom Modal */}
-      <div className="flex justify-center mb-4">
-        <div 
-          className="relative group cursor-zoom-in"
-          onClick={() => setIsZoomed(true)}
-        >
-          <div className="w-32 h-32 rounded-lg overflow-hidden border-2 border-gray-200 shadow-md bg-gray-100">
-            <img 
-              src={`data:image/jpeg;base64,${imageUrl}`} 
-              alt="Report Thumbnail" 
-              className="w-full h-full object-cover group-hover:opacity-90 transition-opacity"
-            />
-          </div>
-          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-            <div className="bg-black/50 text-white p-1 rounded-full">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM10.5 7.5v6m3-3h-6" />
-              </svg>
+      {/* Image Gallery */}
+      {imageUrls.length > 0 && (
+        <div className="flex gap-3 overflow-x-auto pb-4 px-2 snap-x">
+          {imageUrls.map((img, idx) => (
+            <div 
+              key={idx}
+              className="flex-shrink-0 w-32 h-32 relative group cursor-zoom-in snap-center"
+              onClick={() => setZoomedImage(img)}
+            >
+              <div className="w-full h-full rounded-lg overflow-hidden border-2 border-gray-200 shadow-md bg-gray-100">
+                <img 
+                  src={`data:image/jpeg;base64,${img}`} 
+                  alt={`Input ${idx + 1}`} 
+                  className="w-full h-full object-cover group-hover:opacity-90 transition-opacity"
+                />
+              </div>
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="bg-black/50 text-white p-1 rounded-full">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM10.5 7.5v6m3-3h-6" />
+                  </svg>
+                </div>
+              </div>
+              <span className="absolute bottom-1 right-1 bg-black/60 text-white text-[10px] px-1.5 rounded-sm">
+                {idx + 1}/{imageUrls.length}
+              </span>
             </div>
-          </div>
-          <p className="text-xs text-center text-gray-500 mt-1">點擊放大圖片</p>
+          ))}
         </div>
-      </div>
+      )}
 
-      {isZoomed && (
+      {/* Zoom Modal */}
+      {zoomedImage && (
         <div 
           className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 cursor-zoom-out animate-fade-in"
-          onClick={() => setIsZoomed(false)}
+          onClick={() => setZoomedImage(null)}
         >
           <img 
-            src={`data:image/jpeg;base64,${imageUrl}`} 
-            alt="Report Full Size" 
+            src={`data:image/jpeg;base64,${zoomedImage}`} 
+            alt="Full Size" 
             className="max-w-full max-h-full object-contain rounded shadow-2xl"
           />
           <button className="absolute top-6 right-6 text-white/80 hover:text-white bg-black/20 p-2 rounded-full backdrop-blur-sm">

@@ -9,15 +9,15 @@ const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>(AppState.IDLE);
   const [analysis, setAnalysis] = useState<FallAnalysis | null>(null);
   const [errorMsg, setErrorMsg] = useState<string>('');
-  const [currentImage, setCurrentImage] = useState<string | null>(null);
+  const [currentImages, setCurrentImages] = useState<string[]>([]);
 
-  const handleImageSelected = async (base64: string) => {
+  const handleAnalyze = async (images: string[]) => {
     setAppState(AppState.ANALYZING);
-    setCurrentImage(base64);
+    setCurrentImages(images);
     setErrorMsg('');
     
     try {
-      const result = await analyzeFallReport(base64);
+      const result = await analyzeFallReport(images);
       setAnalysis(result);
       setAppState(AppState.SUCCESS);
     } catch (error: any) {
@@ -32,7 +32,7 @@ const App: React.FC = () => {
   const handleReset = () => {
     setAppState(AppState.IDLE);
     setAnalysis(null);
-    setCurrentImage(null);
+    setCurrentImages([]);
     setErrorMsg('');
   };
 
@@ -67,12 +67,12 @@ const App: React.FC = () => {
             <div className="text-center space-y-2 max-w-md">
               <h2 className="text-2xl font-bold text-gray-900">跌倒意外智能分析</h2>
               <p className="text-gray-500">
-                拍攝院舍跌倒意外報告，AI 將自動分析原因、建議預防措施，並生成交更簿記錄。
+                支援多頁報告或多張環境相片。拍攝後 AI 將自動分析並生成專業記錄。
               </p>
             </div>
             
-            <div className="w-full max-w-sm">
-              <CameraInput onImageSelected={handleImageSelected} disabled={false} />
+            <div className="w-full max-w-md">
+              <CameraInput onAnalyze={handleAnalyze} disabled={false} />
             </div>
 
             <div className="bg-blue-50 text-blue-800 px-4 py-3 rounded-lg text-sm flex items-start gap-2 max-w-sm">
@@ -92,7 +92,7 @@ const App: React.FC = () => {
               <div className="absolute inset-0 border-4 border-teal-500 rounded-full border-t-transparent animate-spin"></div>
             </div>
             <h3 className="text-xl font-bold text-gray-800">正在連接雲端分析...</h3>
-            <p className="text-gray-500 mt-2">請稍候，這可能需要幾秒鐘</p>
+            <p className="text-gray-500 mt-2">正在處理 {currentImages.length} 張圖片，請稍候...</p>
           </div>
         )}
 
@@ -165,7 +165,7 @@ const App: React.FC = () => {
           <AnalysisResult 
             analysis={analysis} 
             onReset={handleReset} 
-            imageUrl={currentImage || ''}
+            imageUrls={currentImages}
           />
         )}
 
