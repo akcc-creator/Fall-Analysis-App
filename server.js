@@ -79,7 +79,8 @@ app.post('/analyze', async (req, res) => {
     }
 
     // Get API Key from server environment variables
-    const apiKey = process.env.API_KEY;
+    // Support VITE_API_KEY as fallback for local dev convenience
+    const apiKey = process.env.API_KEY || process.env.VITE_API_KEY;
     if (!apiKey) {
       return res.status(500).json({ error: 'Server configuration error: API_KEY is missing.' });
     }
@@ -134,5 +135,5 @@ app.post('/analyze', async (req, res) => {
 // Start Server
 app.listen(PORT, () => {
   console.log(`Backend server running on http://localhost:${PORT}`);
-  console.log(`API Key configured: ${!!process.env.API_KEY}`);
+  console.log(`API Key configured: ${!!(process.env.API_KEY || process.env.VITE_API_KEY)}`);
 });

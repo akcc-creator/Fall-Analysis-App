@@ -39,6 +39,8 @@ const App: React.FC = () => {
   const isRateLimit = errorMsg.includes("用量已達上限") || errorMsg.includes("RESOURCE_EXHAUSTED");
   // Check specifically for server connection issues
   const isConnectionError = errorMsg.includes("無法連接") || errorMsg.includes("找不到");
+  // Check specifically for Vercel Env Var issues
+  const isEnvError = errorMsg.includes("Vercel 環境變數") || errorMsg.includes("API_KEY");
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
@@ -96,7 +98,7 @@ const App: React.FC = () => {
 
         {/* State: ERROR */}
         {appState === AppState.ERROR && (
-          <div className="flex flex-col items-center justify-center py-12 text-center px-4">
+          <div className="flex flex-col items-center justify-center py-12 text-center px-4 w-full">
             <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${isRateLimit ? 'bg-amber-100 text-amber-500' : 'bg-red-100 text-red-500'}`}>
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-8 h-8">
                 {isRateLimit ? (
@@ -111,6 +113,31 @@ const App: React.FC = () => {
               <p className={`${isRateLimit ? 'text-amber-800' : 'text-red-800'} font-medium text-sm break-words whitespace-pre-line`}>{errorMsg}</p>
             </div>
             
+            {isEnvError && (
+              <div className="mt-6 max-w-md text-left bg-blue-50 p-5 rounded-lg border border-blue-200 shadow-sm">
+                <h4 className="font-bold text-blue-900 mb-2 flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                  如何在 Vercel 修正此錯誤：
+                </h4>
+                <ol className="list-decimal list-inside space-y-2 text-sm text-blue-800">
+                  <li>進入你的 Vercel 專案頁面 (Dashboard)。</li>
+                  <li>點擊上方 <strong>Settings</strong> (設定)。</li>
+                  <li>點擊左側 <strong>Environment Variables</strong>。</li>
+                  <li>
+                    新增變數：
+                    <ul className="list-disc list-inside ml-5 mt-1 text-blue-700 bg-blue-100/50 p-2 rounded">
+                      <li>Key: <code>API_KEY</code></li>
+                      <li>Value: <code>貼上你的 Google Gemini API Key</code></li>
+                    </ul>
+                  </li>
+                  <li>按 <strong>Save</strong> 儲存。</li>
+                  <li><strong>重要：</strong>回到 Deployments 頁面，點擊最新的部署右側的三點選單，選擇 <strong>Redeploy</strong>，設定才會生效。</li>
+                </ol>
+              </div>
+            )}
+
             {isConnectionError && (
               <div className="mt-4 text-xs text-gray-500 bg-gray-100 p-3 rounded text-left">
                 <strong>本地開發提示 (Localhost):</strong>
@@ -119,8 +146,7 @@ const App: React.FC = () => {
                 </ul>
                 <strong className="block mt-2">Vercel 部署提示:</strong>
                 <ul className="list-disc ml-4 mt-1">
-                  <li>請檢查 Vercel 專案設定中是否已加入 <code>API_KEY</code> 環境變數</li>
-                  <li>請確保 <code>api/analyze.js</code> 檔案已正確上傳</li>
+                  <li>請檢查是否已成功部署 <code>api/analyze.js</code></li>
                 </ul>
               </div>
             )}
