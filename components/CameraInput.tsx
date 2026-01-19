@@ -1,4 +1,3 @@
-
 import React, { useRef, useState, useEffect } from 'react';
 
 interface CameraInputProps {
@@ -42,7 +41,9 @@ const CameraInput: React.FC<CameraInputProps> = ({ onAnalyze, disabled }) => {
 
   const processImage = (source: HTMLVideoElement | HTMLImageElement): string => {
     const canvas = document.createElement('canvas');
-    const MAX_SIZE = 1600; // OCR optimal
+    // Reduced to 1024px to prevent Vercel Payload Too Large errors with multiple images
+    // This is the sweet spot for stability vs OCR quality on mobile networks
+    const MAX_SIZE = 1024; 
     let w = source instanceof HTMLVideoElement ? source.videoWidth : source.width;
     let h = source instanceof HTMLVideoElement ? source.videoHeight : source.height;
 
@@ -54,6 +55,7 @@ const CameraInput: React.FC<CameraInputProps> = ({ onAnalyze, disabled }) => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return '';
     ctx.drawImage(source, 0, 0, w, h);
+    // Quality 0.7 retains good text detail while dropping file size
     return canvas.toDataURL('image/jpeg', 0.7).split(',')[1];
   };
 
@@ -69,13 +71,12 @@ const CameraInput: React.FC<CameraInputProps> = ({ onAnalyze, disabled }) => {
     const files = e.target.files;
     if (!files) return;
     setIsProcessing(true);
-    Promise.all(Array.from(files).map(file => {
+    Promise.all(Array.from(files).map((file: File) => {
       return new Promise<string>((resolve) => {
         const reader = new FileReader();
         reader.onload = (re) => {
           const img = new Image();
           img.onload = () => resolve(processImage(img));
-          // Fixed: Ensure result is treated as a string to avoid TS error
           const result = re.target?.result;
           if (typeof result === 'string') {
             img.src = result;
