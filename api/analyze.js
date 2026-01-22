@@ -37,12 +37,6 @@ Your task is to analyze the input images (Fall Incident Reports or Environment P
 - **No Hallucinations**: Do not invent injuries not mentioned in text.
 - **Language**: Traditional Chinese (Cantonese clinical style).
 - **Perspective**: **PT only**. Do not mention nursing tasks like "check BP" or "notify family" unless directly relevant to the physical fall mechanism.
-
-### OUTPUT MAPPING
-- \`detectedTextSummary\`: Brief summary of document text OR environment.
-- \`possibleCauses\`: Root causes of fall OR Environmental hazards.
-- \`preventionStrategies\`: PT-focused measures (Environment, Physical, Care).
-- \`handoverNote\`: The short, professional PT note.
 `;
 
 const RESPONSE_SCHEMA = {
@@ -66,7 +60,7 @@ const RESPONSE_SCHEMA = {
           rationale: { type: Type.STRING },
           category: { 
             type: Type.STRING, 
-            enum: ['Environment', 'Physical', 'Medication', 'Care', 'Other'] 
+            description: "Category: Environment, Physical, Medication, Care, or Other"
           },
         },
         required: ["measure", "rationale", "category"],
@@ -129,6 +123,13 @@ export default async function handler(req, res) {
         responseMimeType: "application/json",
         responseSchema: RESPONSE_SCHEMA,
         temperature: 0.1,
+        // Safety settings to allow medical/accident context
+        safetySettings: [
+          { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+          { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+        ],
       },
     });
 
