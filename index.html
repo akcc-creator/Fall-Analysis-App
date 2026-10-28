@@ -1,49 +1,16 @@
-
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="zh-HK">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="https://picsum.photos/32/32" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FallGuard AI</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-      @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@400;500;700&display=swap');
-      body {
-        font-family: 'Noto Sans HK', sans-serif;
-        background-color: #f9fafb;
-      }
-      .animate-fade-in {
-        animation: fadeIn 0.5s ease-out;
-      }
-      @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-      .loader {
-        border-top-color: #0d9488;
-        animation: spinner 1.5s linear infinite;
-      }
-      @keyframes spinner {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-      }
-    </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@19.0.0",
-    "react-dom": "https://esm.sh/react-dom@19.0.0",
-    "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
-    "@google/genai": "https://esm.sh/@google/genai@1.3.0",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "cors": "https://esm.sh/cors@^2.8.5",
-    "express": "https://esm.sh/express@^5.2.1"
-  }
-}
-</script>
-</head>
+    <meta name="theme-color" content="#176c61" />
+    <meta
+      name="description"
+      content="FallGuard AI 跌倒風險智能分析助手：整理跌倒報告、辨識可見環境風險及生成交更記錄草稿。"
+    />
+    <title>FallGuard AI · 跌倒風險智能分析助手</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>

@@ -1,31 +1,31 @@
-
 import { FallAnalysis } from "../types";
-
-const getBackendUrl = () => {
-  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-    return 'http://localhost:3000/analyze';
+export const analyzeFallReport = async (
+  images: string[],
+): Promise<FallAnalysis> => {
+  const response = await fetch("/api/analyze", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ images }),
+  });
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw Error(data.error || `分析失敗 (${response.status})`);
   }
-  return '/api/analyze';
-};
-
-export const analyzeFallReport = async (base64Images: string[]): Promise<FallAnalysis> => {
-  const BACKEND_URL = getBackendUrl();
-  
-  try {
-    const response = await fetch(BACKEND_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ images: base64Images })
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `分析失敗 (${response.status})`);
-    }
-
-    return await response.json();
-  } catch (error: any) {
-    console.error("Fetch Error:", error);
-    throw new Error(error.message || "網絡連線出現問題，請檢查網絡後重試。");
-  }
+  const result = await response.json();
+  if (
+    typeof result.handoverNote !== "string" ||
+    typeof result.detectedTextSummary !== "string" ||
+    !Array.isArray(result.possibleCauses) ||
+    !result.possibleCauses.every((x: unknown) => typeof x === "string") ||
+    !Array.isArray(result.preventionStrategies) ||
+    !result.preventionStrategies.every(
+      (x: any) =>
+        x &&
+        typeof x.measure === "string" &&
+        typeof x.rationale === "string" &&
+        typeof x.category === "string",
+    )
+  )
+    throw Error("未能讀取完整分析結果，請重試。");
+  return result;
 };
