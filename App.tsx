@@ -1,177 +1,253 @@
-
-import React, { useState } from 'react';
-import { analyzeFallReport } from './services/geminiService';
-import CameraInput from './components/CameraInput';
-import AnalysisResult from './components/AnalysisResult';
-import { AppState, FallAnalysis } from './types';
-
-const App: React.FC = () => {
-  const [appState, setAppState] = useState<AppState>(AppState.IDLE);
-  const [analysis, setAnalysis] = useState<FallAnalysis | null>(null);
-  const [errorMsg, setErrorMsg] = useState<string>('');
-  const [currentImages, setCurrentImages] = useState<string[]>([]);
-
-  const handleAnalyze = async (images: string[]) => {
-    setAppState(AppState.ANALYZING);
-    setCurrentImages(images);
-    setErrorMsg('');
-    
+import React, { useState } from "react";
+import CameraInput from "./components/CameraInput";
+import AnalysisResult from "./components/AnalysisResult";
+import Icon from "./components/Icon";
+import { analyzeFallReport } from "./services/geminiService";
+import { AppState, FallAnalysis } from "./types";
+import "./style.css";
+export default function App() {
+  const [state, setState] = useState(AppState.IDLE),
+    [analysis, setAnalysis] = useState<FallAnalysis | null>(null),
+    [error, setError] = useState(""),
+    [images, setImages] = useState<string[]>([]),
+    [demo, setDemo] = useState(false);
+  async function analyze(imgs: string[]) {
+    setImages(imgs);
+    setState(AppState.ANALYZING);
+    setError("");
+    setDemo(false);
     try {
-      const result = await analyzeFallReport(images);
-      setAnalysis(result);
-      setAppState(AppState.SUCCESS);
-    } catch (error: any) {
-      console.error(error);
-      setAppState(AppState.ERROR);
-      // Display the actual error message
-      const message = error instanceof Error ? error.message : "未知錯誤";
-      setErrorMsg(message || '分析失敗，請檢查網絡或照片清晰度，然後重試。');
+      setAnalysis(await analyzeFallReport(imgs));
+      setState(AppState.SUCCESS);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "連線失敗，請稍後重試。");
+      setState(AppState.ERROR);
     }
-  };
-
-  const handleReset = () => {
-    setAppState(AppState.IDLE);
+  }
+  function reset() {
+    setState(AppState.IDLE);
     setAnalysis(null);
-    setCurrentImages([]);
-    setErrorMsg('');
-  };
-
-  const isRateLimit = errorMsg.includes("用量已達上限") || errorMsg.includes("RESOURCE_EXHAUSTED");
-  // Check specifically for server connection issues
-  const isConnectionError = errorMsg.includes("無法連接") || errorMsg.includes("找不到");
-  // Check specifically for Vercel Env Var issues
-  const isEnvError = errorMsg.includes("Vercel 環境變數") || errorMsg.includes("API_KEY");
-
+    setImages([]);
+    setDemo(false);
+  }
+  function showDemo() {
+    setDemo(true);
+    setImages([]);
+    setAnalysis({
+      detectedTextSummary:
+        "示例情境：走廊地面有電線及雜物，部分通道被阻擋。本頁為虛構示範，並非真實院友評估。",
+      possibleCauses: [
+        "電線橫跨通道，可能增加絆倒風險。",
+        "雜物收納位置影響通道暢通，可能限制助行器通過。",
+      ],
+      preventionStrategies: [
+        {
+          category: "Environment",
+          measure: "整理電線及清空通道",
+          rationale:
+            "將電線固定於牆邊，移除通道雜物，保持助行器及輪椅通行空間。",
+        },
+        {
+          category: "Physical",
+          measure: "按個別需要評估步行及平衡能力",
+          rationale:
+            "由物理治療師結合病史及實際功能評估，制訂個人化訓練與輔具建議。",
+        },
+      ],
+      handoverNote:
+        "環境巡查建議草稿：示例走廊可見電線及雜物阻塞通道，建議整理電線及移除障礙物，並由同事實地核實及跟進。",
+    });
+    setState(AppState.SUCCESS);
+  }
   return (
-    <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-center relative">
-          <div className="flex items-center gap-2">
-            <div className="bg-teal-500 text-white p-1.5 rounded-lg">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-              </svg>
-            </div>
-            <h1 className="text-xl font-bold text-gray-800 tracking-tight">FallGuard <span className="text-teal-600">AI</span></h1>
+    <div className="app">
+      <header className="topbar">
+        <div className="brand">
+          <span className="brand-icon">
+            <Icon name="shield" size={26} />
+          </span>
+          <div>
+            <strong>
+              FallGuard <em>AI</em>
+            </strong>
+            <small>跌倒風險 · 智能分析助手</small>
           </div>
         </div>
+        <span className="top-tag">
+          <span /> 物理治療工作工具
+        </span>
       </header>
-
-      {/* Main Content */}
-      <main className="max-w-3xl mx-auto px-4 py-8">
-        
-        {/* State: IDLE */}
-        {appState === AppState.IDLE && (
-          <div className="flex flex-col items-center justify-center space-y-8 animate-fade-in mt-8">
-            <div className="text-center space-y-2 max-w-md">
-              <h2 className="text-2xl font-bold text-gray-900">跌倒意外智能分析</h2>
-              <p className="text-gray-500">
-                支援多頁報告或多張環境相片。拍攝後 AI 將自動分析並生成專業記錄。
-              </p>
-            </div>
-            
-            <div className="w-full max-w-md">
-              <CameraInput onAnalyze={handleAnalyze} disabled={false} />
-            </div>
-
-            <div className="bg-blue-50 text-blue-800 px-4 py-3 rounded-lg text-sm flex items-start gap-2 max-w-sm">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex-shrink-0 mt-0.5">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-              </svg>
-              <span>為保障私隱，系統不會儲存任何照片，所有分析均即時處理。</span>
-            </div>
+      <div className="workspace">
+        <aside className="sidebar">
+          <div className="side-label">工作空間</div>
+          <button className="nav-item active" onClick={reset}>
+            <Icon name="spark" /> 智能分析 <span>01</span>
+          </button>
+          <div className="side-note">
+            <span className="small-icon">
+              <Icon name="shield" />
+            </span>
+            <h3>每一步，多一份安心。</h3>
+            <p>
+              整理觀察、辨識風險，
+              <br />
+              協助制訂防跌措施。
+            </p>
           </div>
-        )}
-
-        {/* State: ANALYZING */}
-        {appState === AppState.ANALYZING && (
-          <div className="flex flex-col items-center justify-center py-20 animate-pulse">
-            <div className="relative w-20 h-20 mb-6">
-              <div className="absolute inset-0 border-4 border-gray-200 rounded-full"></div>
-              <div className="absolute inset-0 border-4 border-teal-500 rounded-full border-t-transparent animate-spin"></div>
-            </div>
-            <h3 className="text-xl font-bold text-gray-800">正在連接雲端分析...</h3>
-            <p className="text-gray-500 mt-2">正在處理 {currentImages.length} 張圖片，請稍候...</p>
+          <div className="side-bottom">
+            FALLGUARD AI <span>照顧，從細節開始</span>
           </div>
-        )}
-
-        {/* State: ERROR */}
-        {appState === AppState.ERROR && (
-          <div className="flex flex-col items-center justify-center py-12 text-center px-4 w-full">
-            <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${isRateLimit ? 'bg-amber-100 text-amber-500' : 'bg-red-100 text-red-500'}`}>
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-8 h-8">
-                {isRateLimit ? (
-                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                ) : (
-                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-                )}
-              </svg>
-            </div>
-            <h3 className="text-lg font-bold text-gray-900">{isRateLimit ? '分析請求過於頻繁' : '分析失敗'}</h3>
-            <div className={`mt-4 p-4 rounded-lg max-w-md w-full ${isRateLimit ? 'bg-amber-50 border border-amber-200' : 'bg-red-50 border border-red-100'}`}>
-              <p className={`${isRateLimit ? 'text-amber-800' : 'text-red-800'} font-medium text-sm break-words whitespace-pre-line`}>{errorMsg}</p>
-            </div>
-            
-            {isEnvError && (
-              <div className="mt-6 max-w-md text-left bg-blue-50 p-5 rounded-lg border border-blue-200 shadow-sm">
-                <h4 className="font-bold text-blue-900 mb-2 flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                  </svg>
-                  如何在 Vercel 修正此錯誤：
-                </h4>
-                <ol className="list-decimal list-inside space-y-2 text-sm text-blue-800">
-                  <li>進入你的 Vercel 專案頁面 (Dashboard)。</li>
-                  <li>點擊上方 <strong>Settings</strong> (設定)。</li>
-                  <li>點擊左側 <strong>Environment Variables</strong>。</li>
-                  <li>
-                    新增變數：
-                    <ul className="list-disc list-inside ml-5 mt-1 text-blue-700 bg-blue-100/50 p-2 rounded">
-                      <li>Key: <code>API_KEY</code></li>
-                      <li>Value: <code>貼上你的 Google Gemini API Key</code></li>
-                    </ul>
-                  </li>
-                  <li>按 <strong>Save</strong> 儲存。</li>
-                  <li><strong>重要：</strong>回到 Deployments 頁面，點擊最新的部署右側的三點選單，選擇 <strong>Redeploy</strong>，設定才會生效。</li>
-                </ol>
+        </aside>
+        <main>
+          <div className="breadcrumb">
+            工作空間 <span>/</span>{" "}
+            {state === AppState.SUCCESS ? "分析結果" : "新增分析"}
+          </div>
+          {state === AppState.IDLE && (
+            <>
+              <section className="intro">
+                <div>
+                  <div className="eyebrow">SMARTER INSIGHTS. SAFER CARE.</div>
+                  <h1>
+                    看清風險，
+                    <br className="mobile-break" />
+                    <span>讓照顧更周全。</span>
+                  </h1>
+                  <p>
+                    上傳跌倒報告或環境相片，
+                    <br className="mobile-break" />讓 AI
+                    協助整理成因及預防建議。
+                  </p>
+                </div>
+                <div className="intro-mark">
+                  <Icon name="shield" size={86} />
+                  <span className="floating-mark">
+                    <Icon name="spark" size={23} />
+                  </span>
+                </div>
+              </section>
+              <div className="steps">
+                <div className="current">
+                  <b>1</b>
+                  <span>加入相片</span>
+                </div>
+                <i />
+                <div>
+                  <b>2</b>
+                  <span>智能分析</span>
+                </div>
+                <i />
+                <div>
+                  <b>3</b>
+                  <span>核實及應用</span>
+                </div>
               </div>
-            )}
-
-            {isConnectionError && (
-              <div className="mt-4 text-xs text-gray-500 bg-gray-100 p-3 rounded text-left">
-                <strong>本地開發提示 (Localhost):</strong>
-                <ul className="list-disc ml-4 mt-1">
-                  <li>請確保已開啟新的終端機並執行 <code>node server.js</code></li>
-                </ul>
-                <strong className="block mt-2">Vercel 部署提示:</strong>
-                <ul className="list-disc ml-4 mt-1">
-                  <li>請檢查是否已成功部署 <code>api/analyze.js</code></li>
-                </ul>
+              <div className="main-grid">
+                <section className="upload-card">
+                  <div className="section-heading">
+                    <span className="small-icon">
+                      <Icon name="upload" />
+                    </span>
+                    <div>
+                      <h2>開始一次新分析</h2>
+                      <p>可同時加入多頁報告或多張環境相片</p>
+                    </div>
+                    <span className="badge">JPEG / PNG</span>
+                  </div>
+                  <CameraInput onAnalyze={analyze} disabled={false} />
+                </section>
+                <aside className="tips">
+                  <h2>可以分析甚麼？</h2>
+                  <div className="tip">
+                    <span className="tip-icon peach">
+                      <Icon name="file" />
+                    </span>
+                    <div>
+                      <h3>跌倒事故報告</h3>
+                      <p>
+                        整理事件經過、可能成因，
+                        <br />
+                        生成交更記錄草稿。
+                      </p>
+                    </div>
+                  </div>
+                  <div className="tip">
+                    <span className="tip-icon mint">
+                      <Icon name="home" />
+                    </span>
+                    <div>
+                      <h3>環境安全相片</h3>
+                      <p>
+                        辨識通道、地面及障礙物等
+                        <br />
+                        可見環境風險。
+                      </p>
+                    </div>
+                  </div>
+                  <div className="tip-divider" />
+                  <h3 className="tips-title">拍攝小提示</h3>
+                  <p className="tip-copy">
+                    保持光線充足、文字清晰，並拍攝完整頁面；上傳前請遮蓋非必要的個人資料。
+                  </p>
+                  <button className="example-button" onClick={showDemo}>
+                    看看分析結果示例 <Icon name="arrow" size={18} />
+                  </button>
+                </aside>
               </div>
-            )}
-
-            <button 
-              onClick={handleReset}
-              className={`mt-6 px-8 py-2.5 rounded-lg text-white font-medium transition-colors ${isRateLimit ? 'bg-amber-500 hover:bg-amber-600' : 'bg-teal-600 hover:bg-teal-700'}`}
-            >
-              重試
-            </button>
-          </div>
-        )}
-
-        {/* State: SUCCESS */}
-        {appState === AppState.SUCCESS && analysis && (
-          <AnalysisResult 
-            analysis={analysis} 
-            onReset={handleReset} 
-            imageUrls={currentImages}
-          />
-        )}
-
-      </main>
+              <div className="privacy">
+                <Icon name="shield" size={20} />
+                <p>
+                  <strong>資料處理提示</strong> 相片會傳送至伺服器及 Google
+                  Gemini 進行分析；本程式不會將相片另存至應用程式資料庫。
+                </p>
+              </div>
+            </>
+          )}
+          {state === AppState.ANALYZING && (
+            <section className="status-card" role="status" aria-live="polite">
+              <div className="spinner" />
+              <div className="eyebrow">ANALYSIS IN PROGRESS</div>
+              <h1>正在整理相片中的線索</h1>
+              <p>正在處理 {images.length} 張相片，請保持頁面開啟。</p>
+              <div className="loading-line" />
+              <small>分析需時視乎圖片數量及網絡狀況而定</small>
+            </section>
+          )}
+          {state === AppState.ERROR && (
+            <section className="status-card" role="alert">
+              <span className="error-icon">
+                <Icon name="alert" size={30} />
+              </span>
+              <h1>暫時未能完成分析</h1>
+              <p className="error-message">{error}</p>
+              <p>已保留本次相片，你可以直接再試。</p>
+              <div className="button-row">
+                <button className="primary" onClick={() => analyze(images)}>
+                  重新分析 <Icon name="arrow" />
+                </button>
+                <button className="secondary" onClick={reset}>
+                  重新選擇相片
+                </button>
+              </div>
+            </section>
+          )}
+          {state === AppState.SUCCESS && analysis && (
+            <AnalysisResult
+              analysis={analysis}
+              imageUrls={images}
+              onReset={reset}
+              demo={demo}
+            />
+          )}
+          <footer>
+            <span>
+              FallGuard AI <span className="footer-dot">·</span>{" "}
+              讓防跌工作更有條理
+            </span>
+            <span>AI 建議須經專業人員核實</span>
+          </footer>
+        </main>
+      </div>
     </div>
   );
-};
-
-export default App;
+}
